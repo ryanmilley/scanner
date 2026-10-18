@@ -1,0 +1,67 @@
+name: Build unsigned IPA
+
+# Build on every push to main and on manual dispatch. The output is an UNSIGNED
+# .ipa — your sideload tool (AltStore / SideStore / Sideloadly / ESign) re-signs
+# it with your own Apple ID when you install, so CI never needs your credentials.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build (unsigned archive)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project BLEProbe.xcodeproj \
+            -scheme BLEProbe \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/BLEProbe.xcarchive" \
+            -destination 'generic/platform=iOS' \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS=""
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="$RUNNER_TEMP/BLEProbe.xcarchive/Products/Applications/BLEProbe.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "::error::App bundle not found at $APP_PATH"
+            ls -R "$RUNNER_TEMP/BLEProbe.xcarchive/Products" || true
+            exit 1
+          fi
+          WORK="$RUNNER_TEMP/ipa"
+          mkdir -p "$WORK/Payload"
+          cp -R "$APP_PATH" "$WORK/Payload/"
+          ( cd "$WORK" && zip -qr "$RUNNER_TEMP/BLEProbe-unsigned.ipa" Payload )
+          echo "Built: $(du -h "$RUNNER_TEMP/BLEProbe-unsigned.ipa" | cut -f1)"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BLEProbe-unsigned-ipa
+          path: ${{ runner.temp }}/BLEProbe-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30

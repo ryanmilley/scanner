@@ -1,0 +1,16 @@
+# XcodeGen generates this from project.yml — never commit it.
+*.xcodeproj/
+*.xcworkspace/
+
+# Build output
+build/
+DerivedData/
+*.ipa
+*.xcarchive/
+Payload/
+
+# macOS / Xcode cruft
+.DS_Store
+*.swp
+xcuserdata/
+*.xcuserstate

@@ -1,0 +1,35 @@
+name: BLEProbe
+options:
+  bundleIdPrefix: com.ryanmilley
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: ""
+    # Unsigned CI builds. The sideload tool (AltStore / SideStore / Sideloadly /
+    # ESign) re-signs with your Apple ID at install time, so we ship no signature.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+
+targets:
+  BLEProbe:
+    type: application
+    platform: iOS
+    sources:
+      - path: BLEProbe
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ryanmilley.bleprobe
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: BLEProbe/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_BITCODE: "NO"
+        SWIFT_EMIT_LOC_STRINGS: "YES"
